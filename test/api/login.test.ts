@@ -284,4 +284,17 @@ void describe('/rest/saveLoginIp', () => {
 
     assert.equal(res.status, 401)
   })
+
+  void it('SQL injection with admin@juice-shop.op 401, no token sent', async () => {
+    const res = await request(app)
+      .post('/rest/user/login')
+      .set({ 'content-type': 'application/json' })
+      .send({
+        email: "admin@juice-sh.op'--",
+        password: 'whatever'
+      })
+
+    assert.equal(res.status, 401)
+    assert.equal(typeof res.body.authentication, 'undefined') // aucun token
+  })
 })
