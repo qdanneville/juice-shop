@@ -28,9 +28,9 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 
 if (typeof globalThis.ResizeObserver === 'undefined') {
     globalThis.ResizeObserver = class ResizeObserver {
-        observe () {}
-        unobserve () {}
-        disconnect () {}
+        observe() { }
+        unobserve() { }
+        disconnect() { }
     } as any
 }
 
@@ -124,7 +124,7 @@ describe('SearchResultComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(),
-                TranslateModule.forRoot(),
+            TranslateModule.forRoot(),
                 MatTableModule,
                 MatPaginatorModule,
                 MatDialogModule,
@@ -170,7 +170,7 @@ describe('SearchResultComponent', () => {
     })
 
     it('should hold no products when product search API call fails', () => {
-        vi.spyOn(console, 'log').mockImplementation(() => {})
+        vi.spyOn(console, 'log').mockImplementation(() => { })
         productService.search.mockReturnValue(throwError(() => 'Error'))
         component.ngAfterViewInit()
         fixture.detectChanges()
@@ -186,7 +186,7 @@ describe('SearchResultComponent', () => {
     })
 
     it('should hold no products when quantity getAll API call fails', () => {
-        vi.spyOn(console, 'log').mockImplementation(() => {})
+        vi.spyOn(console, 'log').mockImplementation(() => { })
         quantityService.getAll.mockReturnValue(throwError(() => 'Error'))
         component.ngAfterViewInit()
         fixture.detectChanges()
@@ -325,10 +325,10 @@ describe('SearchResultComponent', () => {
             const observeSpy = vi.fn()
             let resizeCb: (() => void) | undefined
             const FakeRO = class {
-                constructor (cb: () => void) { resizeCb = cb }
+                constructor(cb: () => void) { resizeCb = cb }
                 observe = observeSpy
-                unobserve () {}
-                disconnect () {}
+                unobserve() { }
+                disconnect() { }
             }
             const originalRO = globalThis.ResizeObserver
             globalThis.ResizeObserver = FakeRO as any
@@ -337,7 +337,7 @@ describe('SearchResultComponent', () => {
             const grid = document.createElement('div')
             grid.className = 'products-grid'
             grid.style.gridTemplateColumns = 'auto auto auto'
-            ;(component as any).elRef = { nativeElement: { querySelector: () => grid } }
+                ; (component as any).elRef = { nativeElement: { querySelector: () => grid } }
 
             component.ngAfterViewInit()
             fixture.detectChanges()
@@ -359,17 +359,17 @@ describe('SearchResultComponent', () => {
                 // getComputedStyle returns gridTemplateColumns with 4 entries -> pageSize = ceil(15/4)*4 = 16
             } as any
             const original = (window as any).getComputedStyle
-            ;(window as any).getComputedStyle = () => ({ gridTemplateColumns: 'a b c d' })
+                ; (window as any).getComputedStyle = () => ({ gridTemplateColumns: 'a b c d' })
             const emitSpy = vi.spyOn(component.paginator.page, 'emit')
-            ;(component as any).updatePageSize(fakeGrid)
+                ; (component as any).updatePageSize(fakeGrid)
             expect(component.currentPageSize).toBe(16)
             expect(component.paginator.pageSize).toBe(16)
             expect(emitSpy).toHaveBeenCalled()
-            ;(window as any).getComputedStyle = original
+                ; (window as any).getComputedStyle = original
         })
 
         it('should silently skip responsive page sizing when products grid is missing', () => {
-            ;(component as any).elRef = { nativeElement: { querySelector: () => null } }
+            ; (component as any).elRef = { nativeElement: { querySelector: () => null } }
             expect(() => {
                 component.ngAfterViewInit()
                 fixture.detectChanges()
@@ -379,16 +379,16 @@ describe('SearchResultComponent', () => {
 
     describe('hacking instructor integration', () => {
         it('should start the hacking instructor when challenge param and hacking-instructor URL are present', () => {
-            const spy = vi.spyOn(component, 'startHackingInstructor').mockImplementation(() => {})
-            ;(activatedRoute.snapshot as any).queryParams.challenge = 'Score Board'
-            ;(activatedRoute.snapshot as any).url = { join: () => 'hacking-instructor' }
+            const spy = vi.spyOn(component, 'startHackingInstructor').mockImplementation(() => { })
+                ; (activatedRoute.snapshot as any).queryParams.challenge = 'Score Board'
+                ; (activatedRoute.snapshot as any).url = { join: () => 'hacking-instructor' }
             component.ngAfterViewInit()
             fixture.detectChanges()
             expect(spy).toHaveBeenCalledWith('Score Board')
         })
 
         it('should log to console and call startHackingInstructorFor when startHackingInstructor is called', async () => {
-            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { })
             component.startHackingInstructor('Score Board')
             expect(consoleSpy).toHaveBeenCalledWith('Starting instructions for challenge "Score Board"')
             // Testing the dynamic import and the subsequent call is harder,
@@ -425,7 +425,7 @@ describe('SearchResultComponent', () => {
 
             const dsDisconnectSpy = vi.spyOn(component.dataSource, 'disconnect')
             const roDisconnectSpy = vi.fn()
-            ;(component as any).resizeObserver = { disconnect: roDisconnectSpy }
+                ; (component as any).resizeObserver = { disconnect: roDisconnectSpy }
 
             expect(() => component.ngOnDestroy()).not.toThrow()
             expect(dsDisconnectSpy).toHaveBeenCalled()
@@ -436,6 +436,18 @@ describe('SearchResultComponent', () => {
             const freshFixture = TestBed.createComponent(SearchResultComponent)
             const freshComponent = freshFixture.componentInstance
             expect(() => freshComponent.ngOnDestroy()).not.toThrow()
+        })
+    })
+
+    describe('DOM XSS via le paramètre de recherche', () => {
+        it('affiche le payload <iframe> encodé en texte, sans l\'interpréter', () => {
+            activatedRoute.setQueryParameter('<iframe src="javascript:alert(`xss`)">') // ?q=... dans l'URL
+            component.filterTable() // le composant lit la recherche
+            fixture.detectChanges() // Angular met à jour la page
+
+            const searchValue = fixture.nativeElement.querySelector('#searchValue')
+            expect(searchValue.querySelector('iframe')).toBeNull() // pas interprété
+            expect(searchValue.innerHTML).toContain('&lt;iframe') // encodé
         })
     })
 })
