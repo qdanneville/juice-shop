@@ -220,4 +220,13 @@ void describe('/rest/products/search', () => {
       assert.ok(typeof alternateImage.density === 'string' || typeof alternateImage.width === 'string', 'Expected either density or width descriptor')
     }
   })
+  void it('UNION injection ne renvoie aucune donnée de la table users', async () => {
+    const res = await request(app)
+      .get('/rest/products/search')
+      .query({ q: "')) union select id,'2','3',email,password,'6','7','8','9','10' from users--" })
+
+    const body = JSON.stringify(res.body)
+    assert.ok(!body.includes('@juice-sh.op'),
+      'aucune donnée de la table users ne doit remonter dans la réponse')
+  })
 })
