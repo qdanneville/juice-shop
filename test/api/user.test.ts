@@ -326,4 +326,13 @@ void describe('/rest/user/whoami', () => {
     assert.equal(typeof res.body.user.email, 'string')
     assert.equal(typeof res.body.user.password, 'string')
   })
+
+  void it('GET all users is forbidden via is user is not an admin', async () => {
+    const { token } = await login(app, { email: 'jim@juice-sh.op', password: 'ncc-1701' })
+
+    const res = await request(app)
+      .get('/api/Users')
+      .set({ Authorization: `Bearer ${token}` })
+    assert.equal(res.status, 403)
+  })
 })
