@@ -326,4 +326,22 @@ void describe('/rest/user/whoami', () => {
     assert.equal(typeof res.body.user.email, 'string')
     assert.equal(typeof res.body.user.password, 'string')
   })
+
+  void it('POST new user with role admin wont create an admin -> must create customer', async () => {
+    const res = await request(app)
+      .post('/api/Users')
+      .set(jsonHeader)
+      .send({
+        email: 'qsdqqs@qklsjdkhsialk.com',
+        password: 'hooooorstsqdsdsqd',
+        role: 'admin',
+      })
+    assert.equal(res.status, 201)
+    assert.ok(res.headers['content-type']?.includes('application/json'))
+    assert.equal(typeof res.body.data.id, 'number')
+    assert.equal(typeof res.body.data.createdAt, 'string')
+    assert.equal(typeof res.body.data.updatedAt, 'string')
+    assert.equal(res.body.data.password, undefined)
+    assert.equal(res.body.data.role, 'customer')
+  })
 })
