@@ -146,6 +146,19 @@ void describe('/rest/products/reviews', () => {
     assert.equal(res.status, 200)
   })
 
+  void it('un utilisateur ne peut pas modifier l\'avis d\'un autre', async () => {
+    const { token } = await login(app, { email: 'jim@juice-sh.op', password: 'ncc-1701' })
+    const reviews = await request(app).get('/rest/products/1/reviews')
+    const otherReview = reviews.body.data.find((review: any) => review.author !== 'jim@juice-sh.op')
+
+    const res = await request(app)
+      .patch('/rest/products/reviews')
+      .set({ Authorization: `Bearer ${token}`, 'content-type': 'application/json' })
+      .send({ id: otherReview._id, message: 'Avis modifié' })
+
+    assert.equal(res.body.modified, 0) // aucun avis modifié
+  })
+
   void it('PATCH missing product review evaluates forged review criteria without an original review', async () => {
     challenges.forgedReviewChallenge.solved = false
     const forgedAuthHeader = {
