@@ -49,7 +49,23 @@ export const cutOffPoisonNullByte = (str: string) => {
   return str
 }
 
-export const isAuthorized = () => expressJwt(({ secret: publicKey }) as any)
+export const isAuthorized = () => {
+  const jwtMiddleware = expressJwt(({ secret: publicKey }) as any)
+  return (req: Request, res: Response, next: NextFunction) => {
+    const token = utils.jwtFrom(req)
+    if (token) {
+      let alg: string | undefined
+      try {
+        alg = JSON.parse(Buffer.from(token.split('.')[0], 'base64').toString()).alg
+      } catch { /* jeton malformé : on laisse le middleware le rejeter */ }
+      if (alg !== 'RS256') {
+        res.status(401).send('Invalid token algorithm')
+        return
+      }
+    }
+    jwtMiddleware(req, res, next)
+  }
+}
 export const denyAll = () => expressJwt({ secret: '' + Math.random() } as any)
 export const authorize = (user = {}) => jwt.sign(user, privateKey, { expiresIn: '6h', algorithm: 'RS256' })
 export const verify = (token: string) => token ? (jws.verify as ((token: string, secret: string) => boolean))(token, publicKey) : false

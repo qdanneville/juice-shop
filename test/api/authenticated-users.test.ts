@@ -48,3 +48,16 @@ void describe('/rest/user/authentication-details', () => {
     assert.equal(typeof jim.lastLoginTime, 'number')
   })
 })
+
+// test/api/authenticated-users.test.ts
+void describe('JWT alg:none (section D)', () => {
+  const unsignedToken = 'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJkYXRhIjp7ImVtYWlsIjoiand0bjNkQGp1aWNlLXNoLm9wIn0sImlhdCI6MTUwODYzOTYxMiwiZXhwIjo5OTk5OTk5OTk5fQ.'
+
+  void it('refuse (401) un jeton non signé (alg:none) sur une route protégée', async () => {
+    const res = await request(app)
+      .get('/rest/user/authentication-details')
+      .set({ Authorization: `Bearer ${unsignedToken}` })
+
+    assert.equal(res.status, 401)
+  })
+})
