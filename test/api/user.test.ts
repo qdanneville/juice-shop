@@ -326,4 +326,13 @@ void describe('/rest/user/whoami', () => {
     assert.equal(typeof res.body.user.email, 'string')
     assert.equal(typeof res.body.user.password, 'string')
   })
+
+  void it('refuse une inscription avec un mot de passe faible', async () => {
+    const res = await request(app)
+      .post('/api/Users')
+      .set(jsonHeader)
+      .send({ email: 'faible@juice-sh.op', password: 'admin123', passwordRepeat: 'admin123' })
+
+    assert.equal(res.status, 400)
+  })
 })

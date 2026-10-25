@@ -434,6 +434,14 @@ function configureApp (app: ReturnType<typeof express>, seq: typeof sequelize) {
   app.post('/api/Feedbacks', verify.captchaBypassChallenge())
   /* User registration challenge verifications before finale takes over */
   app.post('/api/Users', (req: Request, res: Response, next: NextFunction) => {
+    const password = String(req.body.password ?? '')
+    if (password.length < 10 || ['admin123', 'password', '123456789'].includes(password.toLowerCase())) {
+      res.status(400).send('Password is too weak')
+      return
+    }
+    next()
+  })
+  app.post('/api/Users', (req: Request, res: Response, next: NextFunction) => {
     if (req.body.email !== undefined && req.body.password !== undefined && req.body.passwordRepeat !== undefined) {
       if (req.body.email.length !== 0 && req.body.password.length !== 0) {
         req.body.email = req.body.email.trim()
