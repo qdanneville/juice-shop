@@ -1,0 +1,64 @@
+{
+  "realm": "nc-connect-sim",
+  "enabled": true,
+  "displayName": "SIMULATION - NC Connect (lab)",
+  "sslRequired": "none",
+  "clients": [
+    {
+      "clientId": "nc-connect-client",
+      "name": "Client vulnerable (lab)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "attributes": { "pkce.code.challenge.method": "" }
+    }
+  ],
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "email": "alice@nc-sim.example",
+      "emailVerified": true,
+      "firstName": "Alice",
+      "lastName": "Sim",
+      "credentials": [{ "type": "password", "value": "alice123", "temporary": false }]
+    },
+    {
+      "username": "victim",
+      "enabled": true,
+      "email": "victim@nc-sim.example",
+      "emailVerified": true,
+      "firstName": "Vic",
+      "lastName": "Time",
+      "credentials": [{ "type": "password", "value": "victim123", "temporary": false }]
+    }
+  ]
+}
+
+---
+OIDC
+
+GET http://localhost:3010/callback?code=CODE_ICI
+
+
+
+
+POST http://localhost:8080/realms/nc-connect-sim/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code&client_id=nc-connect-client&code=19546f36-80e8-4fe1-b33d-1494d7a32034.e0c94956-7ce4-4621-ab6b-95ad1df6ffe5.dc36a20c-b7cc-4e1a-a950-2538d60e0f16&redirect_uri=http://localhost:3010/callback
+
+POST http://localhost:8080/realms/nc-connect-sim/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=nc-connect-client&scope=openid&username=alice&password=alice123
+
+---
+
+Chapitre 7
+
+GET /rest/user/whoami?fields=id,email,password

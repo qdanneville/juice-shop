@@ -1,0 +1,33 @@
+### Lab OIDC — requêtes REST Client (SIMULATION, realm nc-connect-sim)
+@kc = http://localhost:8080
+@realm = nc-connect-sim
+@client = nc-connect-client
+@redirect = http://localhost:3010/callback
+
+### 1. Découverte OIDC (discovery)
+GET {{kc}}/realms/{{realm}}/.well-known/openid-configuration
+
+### 2. JWKS (clés publiques de l'IdP)
+GET {{kc}}/realms/{{realm}}/protocol/openid-connect/certs
+
+### 3. Flux "password" (ROPC) — ABANDONNÉ : le client voit le mot de passe
+POST {{kc}}/realms/{{realm}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id={{client}}&scope=openid email&username=alice&password=alice123
+
+### 4. Authorization Code — étape 1 : page de login (ouvrir dans le navigateur)
+GET {{kc}}/realms/{{realm}}/protocol/openid-connect/auth?client_id={{client}}&redirect_uri={{redirect}}&response_type=code&scope=openid email
+
+### 5. Authorization Code — étape 3 : échange du code contre des jetons
+# Remplacer CODE_ICI par le code reçu sur le redirect_uri (vuln : aucun code_verifier exigé)
+POST {{kc}}/realms/{{realm}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code&client_id={{client}}&code=CODE_ICI&redirect_uri={{redirect}}
+
+### 6. Logout OIDC (RP-Initiated Logout) — détruit la session IdP
+GET {{kc}}/realms/{{realm}}/protocol/openid-connect/logout?client_id={{client}}&post_logout_redirect_uri=http://localhost:3010/
+
+### 7. Callback du client vulnérable SANS state (défaut A) — le client connecte quand même
+GET http://localhost:3010/callback?code=CODE_ICI
