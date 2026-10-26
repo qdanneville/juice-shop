@@ -1,0 +1,35 @@
+# Défaut 2b : RBAC BEAUCOUP TROP LARGE.
+# Le ServiceAccount du pod se voit accorder tous les verbes sur toutes les
+# ressources du namespace — dont la LECTURE DE TOUS LES SECRETS.
+# Couplé au jeton monté (03-deployment.yaml) et à l'absence de NetworkPolicy,
+# un pod compromis lit `juice-db-credentials` et tout ce que contient le namespace.
+# Correctif : Role au plus juste (cf. hardened/02-rbac.yaml).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: juice-sa
+  namespace: juice-shop-lab
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: juice-role-too-broad
+  namespace: juice-shop-lab
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]   # inclut secrets, pods, configmaps…
+    verbs: ["*"]       # get, list, watch, create, delete…
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: juice-rolebinding
+  namespace: juice-shop-lab
+subjects:
+  - kind: ServiceAccount
+    name: juice-sa
+    namespace: juice-shop-lab
+roleRef:
+  kind: Role
+  name: juice-role-too-broad
+  apiGroup: rbac.authorization.k8s.io

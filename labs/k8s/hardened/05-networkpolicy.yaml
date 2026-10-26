@@ -1,0 +1,58 @@
+# Contre-mesure défaut 3 : SEGMENTATION RÉSEAU en « default deny » puis
+# autorisations explicites. Un pod compromis ne peut plus balayer ni rebondir
+# vers les autres services : seuls les flux déclarés passent.
+#
+# ⚠️ k3d/k3s embarque Flannel, qui N'APPLIQUE PAS les NetworkPolicy par défaut.
+# Pour que ce maillon soit réellement actif, créer le cluster avec un CNI qui les
+# applique (voir setup.sh : option --k3s-arg pour désactiver le Flannel par défaut
+# et installer Calico), sinon ces règles sont acceptées mais inertes.
+
+# 1) Tout bloquer par défaut (ingress ET egress) sur tout le namespace.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: juice-shop-lab
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+# 2) Autoriser la résolution DNS (sinon l'app ne résout plus rien).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: juice-shop-lab
+spec:
+  podSelector:
+    matchLabels:
+      app: juice-shop
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+# 3) Autoriser l'accès entrant à Juice Shop sur 3000 (depuis l'ingress/loadbalancer).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-juice-shop-ingress
+  namespace: juice-shop-lab
+spec:
+  podSelector:
+    matchLabels:
+      app: juice-shop
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 3000

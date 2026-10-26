@@ -1,0 +1,53 @@
+# Pod VOLONTAIREMENT vulnérable — k3d LOCAL uniquement, jamais un cluster partagé.
+# Cumule :
+#  - Défaut 1a : securityContext.privileged = true  → accès quasi-root à l'hôte.
+#  - Défaut 1b : volume hostPath sur "/"            → lecture/écriture du FS de l'hôte.
+#  - Défaut 2a : automountServiceAccountToken = true → le jeton du SA est monté
+#                dans le pod (/var/run/secrets/...), exploitable avec le RBAC large.
+#  - Défaut 4b : aucune resources.limits            → DoS par épuisement CPU/mémoire.
+#  - root, pas de drop des capabilities, pas de readOnlyRootFilesystem.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: juice-shop
+  namespace: juice-shop-lab
+  labels:
+    app: juice-shop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: juice-shop
+  template:
+    metadata:
+      labels:
+        app: juice-shop
+    spec:
+      serviceAccountName: juice-sa
+      automountServiceAccountToken: true        # défaut 2a
+      containers:
+        - name: juice-shop
+          image: bkimminich/juice-shop:v20.3.0  # épinglée sur la version du dépôt
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "unsafe"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: juice-db-credentials
+                  key: db-password
+          securityContext:
+            privileged: true                    # défaut 1a
+            runAsUser: 0                         # root
+            allowPrivilegeEscalation: true
+          # défaut 4b : AUCUN bloc resources (ni requests ni limits)
+          volumeMounts:
+            - name: host-root
+              mountPath: /host                  # défaut 1b : l'hôte entier est monté
+      volumes:
+        - name: host-root
+          hostPath:
+            path: /                             # défaut 1b
+            type: Directory

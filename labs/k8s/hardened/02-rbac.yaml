@@ -1,0 +1,19 @@
+# Contre-mesure défaut 2b : RBAC AU PLUS JUSTE.
+# Juice Shop n'a besoin d'AUCUN accès à l'API Kubernetes pour fonctionner.
+# Le moindre privilège, ici, c'est donc : un ServiceAccount dédié SANS aucun
+# Role ni RoleBinding → zéro permission. (Couplé à automountServiceAccountToken=false
+# dans le Deployment, même un pod compromis n'a ni jeton ni droit à présenter.)
+#
+# Si un jour l'app devait lire UNE ressource précise, on accorderait alors un Role
+# minimal, p. ex. (et seulement cela) :
+#   rules:
+#     - apiGroups: [""]
+#       resources: ["configmaps"]
+#       resourceNames: ["juice-config"]   # UNE ressource nommée
+#       verbs: ["get"]                    # UN verbe
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: juice-sa
+  namespace: juice-shop-lab
+automountServiceAccountToken: false

@@ -1,0 +1,14 @@
+# Contre-mesure défaut 1 : Pod Security Standards en mode `restricted` AU NIVEAU
+# DU NAMESPACE. L'admission du cluster REFUSE désormais tout pod privilégié, en
+# root, avec hostPath ou capabilities non droppées — le manifeste vulnérable ne
+# peut tout simplement plus être déployé ici.
+#   enforce = bloque, audit/warn = tracent (utile en migration).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: juice-shop-lab
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

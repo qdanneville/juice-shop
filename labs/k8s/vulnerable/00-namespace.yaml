@@ -1,0 +1,8 @@
+# Défaut transverse : AUCUN Pod Security Standard n'est appliqué sur le namespace.
+# Sans les labels `pod-security.kubernetes.io/*`, le cluster accepte un pod
+# `privileged`, en root, avec hostPath — exactement ce que déploie 03-deployment.yaml.
+# (Comparer avec hardened/00-namespace.yaml qui impose le profil `restricted`.)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: juice-shop-lab
