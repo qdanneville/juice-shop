@@ -312,7 +312,20 @@ void describe('/rest/user/whoami', () => {
     assert.equal(typeof res.body.user.email, 'string')
   })
 
-  void it('GET who-am-i with fields parameter can be tricked into returning password', async () => {
+  void it('ne renvoie jamais le hash, meme si on demande le champ password', async () => {
+    const { token } = await login(app, { email: 'jim@juice-sh.op', password: 'ncc-1701' })
+    const res = await request(app)
+      .get('/rest/user/whoami?fields=id,email,password')
+      .set({ Cookie: `token=${token}` })
+
+    assert.equal(res.status, 200)
+    assert.equal(res.body.user.password, undefined)
+    assert.equal(res.body.user.email, 'jim@juice-sh.op')
+  })
+
+  // Anciennement « can be tricked into returning password » : ce test affirmait la faille
+  // (il attendait un hash en reponse). Mis a jour pour verifier le correctif (liste blanche).
+  void it('GET who-am-i with fields parameter no longer leaks the password', async () => {
     const { token } = await login(app, {
       email: 'bjoern.kimminich@gmail.com',
       password: 'bW9jLmxpYW1nQGhjaW5pbW1pay5ucmVvamI='
@@ -324,6 +337,6 @@ void describe('/rest/user/whoami', () => {
     assert.ok(res.headers['content-type']?.includes('application/json'))
     assert.equal(typeof res.body.user.id, 'number')
     assert.equal(typeof res.body.user.email, 'string')
-    assert.equal(typeof res.body.user.password, 'string')
+    assert.equal(res.body.user.password, undefined)
   })
 })
