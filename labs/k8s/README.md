@@ -12,12 +12,34 @@ conteneur offerte. **Ne faites ce TP que sur un cluster k3d jetable, sur votre p
 Vérifiez votre contexte avant toute commande : `kubectl config current-context`
 (il doit afficher `k3d-juice-lab`).
 
-## Prérequis
+## Prérequis (Ubuntu latest)
 
-- Docker (démon lancé)
-- `kubectl` — `brew install kubernetes-cli`
-- `k3d` — installé automatiquement par `setup.sh` si absent (`brew install k3d`)
-- `trivy` — `brew install trivy` (chapitre 11)
+`setup.sh` installe **docker**, **kubectl** et **k3d** s'ils manquent. Pour les poser à la main :
+
+```bash
+# Docker (puis se rajouter au groupe docker, une reconnexion est nécessaire)
+sudo apt-get update && sudo apt-get install -y docker.io
+sudo usermod -aG docker "$USER"   # relancer la session, ou: newgrp docker
+
+# kubectl (binaire officiel)
+KVER="$(curl -L -s https://dl.k8s.io/release/stable.txt)"
+curl -fsSLO "https://dl.k8s.io/release/${KVER}/bin/linux/$(dpkg --print-architecture)/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
+
+# k3d (script officiel)
+curl -fsSL https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sudo bash
+```
+
+Et **trivy** (chapitre 11), via le dépôt apt d'Aqua Security :
+
+```bash
+sudo apt-get install -y wget gnupg
+wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key \
+  | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" \
+  | sudo tee /etc/apt/sources.list.d/trivy.list
+sudo apt-get update && sudo apt-get install -y trivy
+```
 
 ## Structure
 
