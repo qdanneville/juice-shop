@@ -33,4 +33,11 @@ void describe('/support/logs/:file', () => {
     assert.equal(res.status, 403)
     assert.ok(res.text.includes('Error: File names cannot contain forward slashes!'))
   })
+
+  void it('le journal n’est plus servi comme fichier après correction', async () => {
+    const res = await request(app)
+      .get('/support/logs/access.log.' + utils.toISO8601(new Date()))
+
+    assert.ok(!res.headers['content-type']?.includes('application/octet-stream'))
+  })
 })
